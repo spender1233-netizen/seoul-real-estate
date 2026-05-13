@@ -36,20 +36,41 @@ def stats_by_gu() -> pd.DataFrame:
 
 
 def stats_by_dong(gu: str) -> pd.DataFrame:
-    """특정 구의 동별 매매가 통계"""
+    """특정 구의 동별 매매가 통계
+    - 법정동(역삼동, 대치동)이 있으면 법정동 기준 집계
+    - API가 아파트 동호수(502동)를 반환하면 아파트명+동호수로 표시
+    """
     df = query_to_df("""
         SELECT
-            dong                        AS 동,
+            gu                          AS 구,
+            dong                        AS 법정동,
+            apt_name                    AS 아파트,
             COUNT(*)                    AS 거래건수,
             ROUND(AVG(price))           AS 평균가,
             ROUND(MIN(price))           AS 최저가,
             ROUND(MAX(price))           AS 최고가
         FROM apt_trade
         WHERE gu = ? AND price IS NOT NULL
-        GROUP BY dong
+        GROUP BY dong, apt_name
         ORDER BY 평균가 DESC
     """, (gu,))
-    return df
+
+    if df.empty:
+        return df
+
+    # 동 이름이 숫자(아파트 동호수)인지 법정동인지 구분
+    import re as _re
+    def make_label(row):
+        dong = str(row["법정동"]).strip()
+        apt  = str(row["아파트"]).strip()
+        # 숫자로만 구성되거나 "숫자동" 패턴이면 아파트 동호수
+        if _re.match(r"^\d+동?$", dong) or _re.match(r"^\d+$", dong):
+            return f"{apt} ({dong})"  # 예: 은마아파트 (502동)
+        else:
+            return dong               # 예: 역삼동
+
+    df["동"] = df.apply(make_label, axis=1)
+    return df[["동", "거래건수", "평균가", "최저가", "최고가"]]
 
 
 # ── 2. 월별 추세 ───────────────────────────────────────────
@@ -210,7 +231,7 @@ def detect_outliers(gu: str = None, threshold: float = 2.5) -> pd.DataFrame:
     df["Z스코어"] = ((df["거래금액"] - df["그룹평균"]) / df["그룹표준편차"]).abs().round(2)
 
     outliers = df[df["Z스코어"] >= threshold].copy()
-    outliers["시세대비(%)"] = ((outliers["거래금액"] / outliers["그룹평균"] - 1) * 100).round(1)
+    outliers["시세대비(%)"] = ((outliers["거래금액"] / df["그룹평균"] - 1) * 100).round(1)
     outliers = outliers.sort_values("Z스코어", ascending=False)
 
     return outliers[["gu", "아파트", "전용면적", "층", "거래금액", "그룹평균", "시세대비(%)", "Z스코어", "거래일자"]].head(20)

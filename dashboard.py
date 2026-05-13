@@ -29,7 +29,7 @@ st.caption("국토교통부 실거래가 공개시스템 데이터 기반")
 
 # ── 사이드바 ───────────────────────────────────────────────
 with st.sidebar:
-    st.header("🔍 필터")
+    st.header("필터")
     stats = get_db_stats()
 
     gu_options = stats["수집된구"] if stats["수집된구"] else ["강남구"]
@@ -57,8 +57,8 @@ if not gu_row.empty:
 st.divider()
 
 # ── 탭 구성 ───────────────────────────────────────────────
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📈 가격 추세", "🗺️ 동별 분석", "📐 면적별 단가", "🔎 단지 검색", "⚠️ 이상 거래"
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    "📈 가격 추세", "🗺️ 동별 분석", "📐 면적별 단가", "🔎 단지 검색", "⚠️ 이상 거래", "🗺️ 지도 히트맵", "🤖 가격 예측"
 ])
 
 
@@ -107,7 +107,7 @@ with tab1:
 
 # ── TAB 2: 동별 분석 ───────────────────────────────────────
 with tab2:
-    st.subheader(f"{selected_gu} 동별 평균 매매가")
+    st.subheader(f"{selected_gu} 지역·단지별 평균 매매가")
     df_dong = stats_by_dong(selected_gu)
 
     if df_dong.empty:
@@ -120,7 +120,7 @@ with tab2:
             color="평균가",
             color_continuous_scale="Blues",
             text=df_dong.head(15)["평균가"].apply(lambda x: f"{int(x):,}만"),
-            labels={"평균가": "평균 매매가 (만원)", "동": "법정동"},
+            labels={"평균가": "평균 매매가 (만원)", "동": "지역·단지"},
             height=500,
         )
         fig2.update_traces(textposition="outside")
@@ -253,5 +253,18 @@ if run_ai:
         full_text = ""
         for chunk in stream_analysis(selected_gu, focus):
             full_text += chunk
+            full_text = full_text.replace("~~", "")
             result_box.markdown(full_text + "▌")
         result_box.markdown(full_text)
+
+
+# ── TAB 6: 카카오맵 히트맵 ─────────────────────────────────
+with tab6:
+    from kakao_map import show_map_page
+    show_map_page()
+
+
+# ── TAB 7: ML 가격 예측 ────────────────────────────────────
+with tab7:
+    from ml_model import show_ml_page
+    show_ml_page()
