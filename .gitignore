@@ -1,6 +1,5 @@
 .env
-data/
+data/*.csv
 logs/
 __pycache__/
 *.pyc
-*.db

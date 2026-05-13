@@ -16,6 +16,18 @@ from analyzer import (
     price_per_sqm, detect_outliers, apt_history
 )
 from db_save import get_db_stats
+from pathlib import Path
+
+# 배포 환경 DB 경로 자동 감지
+import database
+_db_candidates = [
+    Path("data/real_estate.db"),
+    Path(__file__).parent / "data" / "real_estate.db",
+]
+for _p in _db_candidates:
+    if _p.exists():
+        database.DB_PATH = _p
+        break
 
 # ── 페이지 설정 ────────────────────────────────────────────
 st.set_page_config(

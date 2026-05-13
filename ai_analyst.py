@@ -287,7 +287,7 @@ FOCUS_PROMPTS = {
 # ── OpenAI API 호출 (스트리밍) ─────────────────────────────
 
 def stream_analysis(gu: str, focus: str = "종합"):
-    api_key = os.getenv("OPENAI_API_KEY", "")
+    api_key = get_secret("OPENAI_API_KEY")
     if not api_key:
         yield "⚠️ OPENAI_API_KEY가 .env 파일에 설정되지 않았습니다.\n"
         yield "https://platform.openai.com/api-keys 에서 키를 발급받아 .env에 추가해주세요."
