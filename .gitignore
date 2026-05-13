@@ -3,3 +3,4 @@ data/*.csv
 logs/
 __pycache__/
 *.pyc
+.streamlit/secrets.toml
