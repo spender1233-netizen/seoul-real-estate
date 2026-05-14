@@ -4,3 +4,5 @@ logs/
 __pycache__/
 *.pyc
 .streamlit/secrets.toml
+PORTFOLIO_REPORT.md
+INTERVIEW_SCRIPT.md
