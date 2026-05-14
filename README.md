@@ -6,6 +6,7 @@
   <img src="https://img.shields.io/badge/SQLite-DB-green?style=flat-square&logo=sqlite"/>
   <img src="https://img.shields.io/badge/OpenAI-GPT--4o--mini-purple?style=flat-square&logo=openai"/>
   <img src="https://img.shields.io/badge/scikit--learn-ML-orange?style=flat-square&logo=scikit-learn"/>
+  <img src="https://img.shields.io/badge/unittest-20_passed-brightgreen?style=flat-square"/>
   <img src="https://img.shields.io/badge/License-MIT-lightgrey?style=flat-square"/>
 </p>
 
@@ -30,7 +31,9 @@
 | 분석 항목 | 구별/지역별 통계, 면적 단가, 이상거래 탐지, ML 예측 |
 | 대시보드 탭 | 7개 탭 (추세·지역·면적·단지검색·이상거래·지도·ML) |
 | 자동화 | 매월 1일 자동 수집 + 주간/월간/분기/연간 리포트 |
-| AI 해설 | GPT-4o-mini 기반 부동산 전문가 수준 한국어 분석 |
+| AI 해설 | GPT-4o-mini 부동산 전문가 수준 한국어 분석 (4가지 초점) |
+| 코드 품질 | 타입 힌트 + docstring + 유닛 테스트 20개 통과 |
+| 배포 | Streamlit Cloud 라이브 배포 |
 
 ---
 
@@ -43,12 +46,12 @@
 처음부터 완성본을 만들지 않고 **6단계 목표**를 순서대로 달성했습니다:
 
 ```
-1단계 ✅ 가격 자동 수집    →  국토부 API 연동, 페이징, 재시도 로직
-2단계 ✅ DB 저장          →  SQLite 스키마 설계, 중복 방지 UPSERT
-3단계 ✅ 데이터 분석       →  통계 집계, Z-score 이상치 탐지
-4단계 ✅ 화면 시각화       →  Streamlit 대시보드, Plotly 차트, Folium 지도
-5단계 ✅ AI 해설          →  GPT-4o-mini 전문가 수준 시장 분석
-6단계 ✅ 포트폴리오        →  GitHub 공개, 자동 리포팅, 배포
+1단계 ✅ 가격 자동 수집    →  국토부 API 연동, 페이징, 지수 백오프 재시도
+2단계 ✅ DB 저장          →  SQLite 스키마 설계, 멱등성 있는 UPSERT
+3단계 ✅ 데이터 분석       →  SQL 집계, Z-score 이상치 탐지, 월별 추세
+4단계 ✅ 화면 시각화       →  Streamlit 7탭, Plotly 차트, Folium 지도 히트맵
+5단계 ✅ AI 해설          →  GPT-4o-mini 전문가 수준 스트리밍 시장 분석
+6단계 ✅ 포트폴리오        →  GitHub 공개, 자동 리포팅, Streamlit Cloud 배포
 ```
 
 ---
@@ -59,13 +62,15 @@
 |------|------|-----------|
 | Language | Python 3.12 | 데이터 처리 최적 생태계 |
 | 데이터 수집 | requests, xml.etree | 공공 API XML 파싱 |
-| 데이터 저장 | SQLite3 | 서버 설치 없는 경량 DB |
+| 데이터 저장 | SQLite3 | 서버 설치 없는 경량 DB (추후 PostgreSQL 마이그레이션 예정) |
 | 데이터 분석 | pandas, numpy | 표 데이터 처리 표준 |
 | 시각화 | Streamlit, Plotly, Folium | Python만으로 웹앱 + 인터랙티브 차트 + 지도 |
-| ML | scikit-learn (RandomForest) | 비선형 관계 포착, 과적합에 강함 |
-| AI 해설 | OpenAI GPT-4o-mini | 데이터 → 자연어 해설 |
+| ML | scikit-learn (RandomForest) | 비선형 관계 포착, 과적합에 강함, 특성 중요도 해석 가능 |
+| AI 해설 | OpenAI GPT-4o-mini | 실거래 데이터 기반 자연어 시장 분석 |
 | 자동화 | APScheduler | Python 내 cron 스케줄링 |
-| 환경 관리 | python-dotenv | API 키 보안 관리 |
+| 테스트 | unittest | 핵심 로직 유닛 테스트 20개 |
+| 배포 | Streamlit Cloud | 링크 하나로 라이브 데모 공유 |
+| 환경 관리 | python-dotenv, st.secrets | 로컬/클라우드 API 키 보안 관리 |
 
 ---
 
@@ -79,17 +84,22 @@ real_estate/
 ├── db_save.py               # 저장 로직 (INSERT OR IGNORE)
 ├── analyzer.py              # 통계 분석 (5종)
 ├── dashboard.py             # Streamlit 대시보드 (7탭)
-├── ai_analyst.py            # GPT 기반 AI 시장 해설
+├── ai_analyst.py            # GPT 전문가 수준 AI 시장 해설
 ├── ml_model.py              # 랜덤포레스트 가격 예측
 ├── kakao_map.py             # Folium 지도 히트맵
 ├── scheduler.py             # 자동 수집 + 리포팅 스케줄러
-├── reporter.py              # HTML 리포트 자동 생성
-├── collect_bulk.py          # 대량 일괄 수집
+├── reporter.py              # HTML 리포트 자동 생성 (4종 주기)
+├── collect_bulk.py          # 서울 전체 대량 수집
 ├── .env.example             # 환경변수 템플릿
 ├── requirements.txt
-└── collectors/
-    ├── trade_collector.py   # 매매 실거래가 수집기
-    └── rent_collector.py    # 전월세 실거래가 수집기
+├── collectors/
+│   ├── trade_collector.py   # 매매 실거래가 수집기 (타입힌트+docstring)
+│   └── rent_collector.py    # 전월세 실거래가 수집기 (타입힌트+docstring)
+├── tests/
+│   ├── test_collectors.py   # 수집기 유닛 테스트 (15개)
+│   └── test_db_save.py      # DB 저장 유닛 테스트 (5개)
+└── utils/
+    └── env.py               # 로컬/.env + Streamlit Cloud secrets 통합
 ```
 
 ---
@@ -99,7 +109,6 @@ real_estate/
 ### 1. 패키지 설치
 ```bash
 pip install -r requirements.txt
-pip install streamlit plotly folium streamlit-folium scikit-learn apscheduler
 ```
 
 ### 2. 환경변수 설정
@@ -113,12 +122,11 @@ OPENAI_API_KEY=sk-...              # platform.openai.com 에서 발급
 ```
 
 ### 3. 데이터 수집
-
 ```bash
 # 단일 구, 단일 월
 python main.py --gu 강남구 --ym 202503 --types 매매
 
-# 서울 전체 6개월 대량 수집
+# 서울 전체 6개월 대량 수집 (약 20~30분)
 python collect_bulk.py --months 6
 
 # DB 현황 확인
@@ -142,6 +150,11 @@ python reporter.py --period monthly   # 월간 리포트
 python reporter.py --period all       # 전체 4종 생성
 ```
 
+### 7. 테스트 실행
+```bash
+python -m unittest tests/test_collectors.py tests/test_db_save.py -v
+```
+
 ---
 
 ## 📊 주요 기능 상세
@@ -151,6 +164,7 @@ python reporter.py --period all       # 전체 4종 생성
 - 페이징 자동 처리 (100건 단위 반복 요청)
 - 지수 백오프 재시도 (2초→4초→8초)
 - 서울 25개 구 일괄 수집 지원
+- 타입 힌트 + docstring 적용
 
 ### 🗄️ 멱등성 있는 DB 저장
 - `INSERT OR IGNORE` + `UNIQUE` 제약으로 중복 방지
@@ -160,34 +174,46 @@ python reporter.py --period all       # 전체 4종 생성
 ### 📈 통계 분석 (5종)
 - 구별·지역별 평균/최저/최고가
 - 월별 가격 추세 (전월 대비 등락률)
-- 면적 구간별 ㎡당 단가
+- 면적 구간별 ㎡당 단가 (평당 단가 환산 포함)
 - 단지별 거래 히스토리
-- **Z-score 기반 이상 거래 탐지** (2.5σ 기준)
+- **Z-score 기반 이상 거래 탐지** (2.5σ 기준, 민감도 조절 가능)
 
-### 🤖 AI 시장 해설
-- 20년 경력 부동산 애널리스트 페르소나 시스템 프롬프트
-- 실거래 데이터를 프롬프트에 직접 주입해 정확한 수치 기반 분석
+### 🤖 AI 시장 해설 (고도화)
+- **20년 경력 부동산 애널리스트 페르소나** 시스템 프롬프트
+- 실거래 수치를 프롬프트에 직접 주입 → 데이터 기반 정확한 분석
+- temperature=0.3으로 일관되고 객관적인 답변 유도
 - 분석 초점 4종: 종합 / 투자 / 실수요 / 이상거래
 - GPT-4o-mini 스트리밍으로 실시간 출력
+- max_tokens=2000으로 상세 분석 보장
 
 ### 🗺️ 지도 히트맵
 - 서울 25개 구 평균가를 파랑→빨강 색상으로 시각화
-- 원 클릭 시 구별 상세 정보 팝업
+- 원 클릭 시 구별 상세 정보 팝업 (평균가, 최고가, 거래건수)
+- 표시 기준 선택: 평균가 / 최고가 / 거래건수
 
 ### 🤖 ML 가격 예측
-- RandomForestRegressor (n_estimators=200)
+- RandomForestRegressor (n_estimators=200, max_depth=12)
 - 입력: 구, 전용면적, 층, 건축년도
-- 출력: 예측 매매가 + 신뢰 범위
-- 특성 중요도 시각화
+- 출력: 예측 매매가 + 신뢰 범위 (200개 트리의 표준편차)
+- 특성 중요도 시각화 (가격 결정 요인 파악)
+- 면적별 예측가 비교 차트
 
 ### 📅 자동 리포팅
 | 주기 | 시간 | 내용 |
 |------|------|------|
 | 매일 | 06:00 | 주요 5개 구 보완 수집 |
-| 매주 | 월요일 07:00 | 주간 HTML 리포트 |
-| 매월 | 1일 00:05 / 07:30 | 전체 수집 + 월간 리포트 |
+| 매주 | 월요일 07:00 | 주간 HTML 리포트 + GPT 해설 |
+| 매월 | 1일 00:05 / 07:30 | 서울 전체 수집 + 월간 리포트 |
 | 분기 | 1/4/7/10월 1일 | 분기 리포트 |
 | 매년 | 1월 1일 | 연간 리포트 |
+
+### 🧪 코드 품질
+- 핵심 함수 타입 힌트 (Optional[int], str, pd.DataFrame 등)
+- 모든 public 함수 docstring (Args, Returns, Note)
+- 유닛 테스트 20개 작성 및 통과
+  - XML 파싱 정확성 (9개)
+  - 헬퍼 함수 단위 검증 (5개)
+  - DB 저장 멱등성 검증 (6개)
 
 ---
 
@@ -210,11 +236,15 @@ XML 태그명도 문서(한글)와 실제 응답(영문, `aptNm`, `dealAmount`)�
 ### 2. 중복 데이터 저장 문제
 자동 스케줄러가 반복 실행될 때 같은 거래가 중복 저장되는 문제.
 → `UNIQUE(apt_name, area, floor, trade_date, price)` + `INSERT OR IGNORE`로
-멱등성 있는 파이프라인 구현
+멱등성 있는 파이프라인 구현. 테스트로 검증 완료
 
 ### 3. Streamlit iframe 보안 제한
 카카오맵 JavaScript SDK가 Streamlit의 iframe 보안 정책에 차단됨.
 → Folium으로 대체해서 Python에서 직접 HTML 생성, 외부 API 의존 제거
+
+### 4. Streamlit Cloud 환경변수 처리
+로컬은 `.env`, 클라우드는 `st.secrets`로 키를 관리하는 방식이 달랐음.
+→ `get_secret()` 함수로 두 환경을 모두 지원하는 통합 처리
 
 ---
 
@@ -223,8 +253,8 @@ XML 태그명도 문서(한글)와 실제 응답(영문, `aptNm`, `dealAmount`)�
 - [ ] PostgreSQL 마이그레이션 (대용량 데이터 대응)
 - [ ] 전국 주요 도시 데이터 확장
 - [ ] 기준금리·대출금리 외부 변수 추가한 ML 모델 고도화
-- [ ] 카카오맵 API 지도 시각화 (플랫폼 전환 후)
-- [ ] Streamlit Cloud 배포 (라이브 데모)
+- [ ] 카카오맵 API 연동 (플랫폼 전환 후)
+- [ ] GitHub Actions CI/CD 자동 테스트 연동
 
 ---
 
