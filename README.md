@@ -12,6 +12,14 @@
 > 국토교통부 실거래가 공공 API → SQLite DB → 통계 분석 → Streamlit 대시보드 → AI 시장 해설까지
 > **end-to-end 부동산 데이터 파이프라인**을 혼자 설계하고 구현한 포트폴리오 프로젝트
 
+<p align="center">
+  <a href="https://seoul-real-estate-mer4p6ydwb8qyupff7eo33.streamlit.app/" target="_blank">
+    <img src="https://static.streamlit.io/badges/streamlit_badge_black_white.svg" alt="Open in Streamlit"/>
+  </a>
+</p>
+
+> 🔗 **라이브 데모**: https://seoul-real-estate-mer4p6ydwb8qyupff7eo33.streamlit.app/
+
 ---
 
 ## 📊 프로젝트 성과 (실측 수치)
