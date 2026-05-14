@@ -18,6 +18,17 @@ from db_save import query_to_df
 load_dotenv()
 
 
+def get_secret(key: str, default: str = "") -> str:
+    """로컬(.env) 또는 Streamlit Cloud(st.secrets)에서 환경변수를 읽는다."""
+    try:
+        import streamlit as st
+        if hasattr(st, "secrets") and key in st.secrets:
+            return str(st.secrets[key])
+    except Exception:
+        pass
+    return os.getenv(key, default)
+
+
 # ── 고레벨 시스템 프롬프트 ─────────────────────────────────
 
 EXPERT_SYSTEM_PROMPT = """당신은 20년 경력의 한국 부동산 시장 수석 애널리스트입니다.
